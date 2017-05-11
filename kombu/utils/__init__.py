@@ -14,7 +14,11 @@ import sys
 from contextlib import contextmanager
 from itertools import count, repeat
 from time import sleep
-from uuid import UUID, uuid4 as _uuid4, _uuid_generate_random
+from uuid import UUID, uuid4
+try:
+    from uuid import _uuid_generate_random
+except ImportError:
+    _uuid_generate_random = None
 
 from kombu.five import int_types, items, reraise, string_t
 
@@ -125,13 +129,12 @@ def say(m, *fargs, **fkwargs):
     print(str(m).format(*fargs, **fkwargs), file=sys.stderr)
 
 
-def uuid4():
-    # Workaround for http://bugs.python.org/issue4607
-    if ctypes and _uuid_generate_random:  # pragma: no cover
+if ctypes and _uuid_generate_random:  # pragma: no cover
+    def uuid4():
+        # Workaround for http://bugs.python.org/issue4607
         buffer = ctypes.create_string_buffer(16)
         _uuid_generate_random(buffer)
         return UUID(bytes=buffer.raw)
-    return _uuid4()
 
 
 def uuid():
